@@ -148,17 +148,16 @@ public class AudioViewCotroller: UIViewController, AVAudioRecorderDelegate, AVAu
         var document = NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask, true)[0] as! String
         var filePath = document.stringByAppendingPathComponent(filename)
         self.url = NSURL(fileURLWithPath: filePath)
-    }
-    
-    private func prepareRecord()->Bool {
         var error:NSError?
         recorder = AVAudioRecorder(URL: url, settings: self.recordSetting, error: &error)
         if error != nil {
             println("init failed \(error)")
             self.delegate?.onRecordingInitFailed?(self, error: error!)
-            return false
         }
         recorder.delegate = self
+    }
+    
+    private func prepareRecord()->Bool {
         var ret = recorder.prepareToRecord()
         if !ret {
             println("prepare faield")

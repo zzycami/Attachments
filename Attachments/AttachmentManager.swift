@@ -23,6 +23,140 @@ public protocol AttachmentDelegate:NSObjectProtocol {
     func onAttachmentCreateFinished(attachment:Attachment)
 }
 
+
+public class ImagePicker: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    @IBOutlet weak var flashButton: UIButton!
+    @IBOutlet var overlayView: UIView!
+    
+    public var delegate:UIImagePickerControllerDelegate?
+    
+    private var imagePickerController:UIImagePickerController?
+    
+    private weak var viewController:UIViewController?
+    
+    private var isTakingVideo:Bool = false
+    
+    public init(delegate:UIImagePickerControllerDelegate) {
+        super.init()
+        self.delegate = delegate
+    }
+    
+    public func showPickerOnViewController(viewController:UIViewController) {
+        if !UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera) {
+            return
+        }
+        imagePickerController = UIImagePickerController()
+        imagePickerController!.allowsEditing = false
+        imagePickerController!.modalPresentationStyle = UIModalPresentationStyle.FullScreen
+        imagePickerController!.sourceType = UIImagePickerControllerSourceType.Camera
+        imagePickerController!.cameraFlashMode = UIImagePickerControllerCameraFlashMode.Off
+        imagePickerController?.delegate = self
+        
+        imagePickerController?.showsCameraControls = false
+        NSBundle.mainBundle().loadNibNamed("Overlay", owner: self, options: nil)
+        self.overlayView.frame = imagePickerController!.cameraOverlayView!.frame
+        imagePickerController!.cameraOverlayView = self.overlayView
+        
+        self.viewController = viewController
+        viewController.presentViewController(imagePickerController!, animated: true, completion: nil)
+    }
+    
+    public func takeVideoOnViewController(viewController:UIViewController) {
+        var sourceType = UIImagePickerControllerSourceType.Camera
+        if !UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera) {
+            return
+        }
+        imagePickerController = UIImagePickerController()
+        imagePickerController!.mediaTypes = [kUTTypeMovie]
+        imagePickerController!.sourceType = sourceType
+        imagePickerController!.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Video
+        imagePickerController!.delegate = self
+        imagePickerController!.allowsEditing = true
+        self.viewController?.modalPresentationStyle = UIModalPresentationStyle.FullScreen
+        
+        imagePickerController?.showsCameraControls = false
+        NSBundle.mainBundle().loadNibNamed("Overlay", owner: self, options: nil)
+        self.overlayView.frame = imagePickerController!.cameraOverlayView!.frame
+        imagePickerController!.cameraOverlayView = self.overlayView
+        
+        isTakingVideo = false
+        
+        self.viewController = viewController
+        viewController.presentViewController(imagePickerController!, animated: true, completion: nil)
+    }
+    
+    private func setFullScreen() {
+        //Based on http://stackoverflow.com/a/20228332/281461
+        var screenBounds = UIScreen.mainScreen().bounds.size
+        var cameraAspectRatio:CGFloat = 4.0/3.0
+
+        var camViewHeight = screenBounds.width * cameraAspectRatio
+        var scale = screenBounds.height / camViewHeight
+        imagePickerController!.cameraViewTransform = CGAffineTransformMakeTranslation(0, (screenBounds.height - camViewHeight) / 2.0)
+        imagePickerController!.cameraViewTransform = CGAffineTransformScale(imagePickerController!.cameraViewTransform, scale, scale)
+    }
+    
+    @IBAction func capture(sender: AnyObject) {
+        if imagePickerController?.cameraCaptureMode == UIImagePickerControllerCameraCaptureMode.Video {
+            if isTakingVideo {
+                self.imagePickerController?.stopVideoCapture()
+            }else {
+                self.imagePickerController?.startVideoCapture()
+            }
+        }else {
+            self.imagePickerController?.takePicture()
+        }
+        
+    }
+    
+    @IBAction func toggleFlash(sender: AnyObject) {
+        if imagePickerController?.cameraFlashMode == UIImagePickerControllerCameraFlashMode.Off {
+            if UIImagePickerController.isFlashAvailableForCameraDevice(imagePickerController!.cameraDevice) {
+                imagePickerController?.cameraFlashMode = UIImagePickerControllerCameraFlashMode.On
+                flashButton.selected = true
+            }
+        }else {
+            imagePickerController?.cameraFlashMode = UIImagePickerControllerCameraFlashMode.Off
+            flashButton.selected = false
+        }
+        
+    }
+    
+    @IBAction func flipCamera(sender: AnyObject) {
+        if self.imagePickerController?.cameraDevice == UIImagePickerControllerCameraDevice.Front {
+            if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Rear) {
+                imagePickerController?.cameraDevice = UIImagePickerControllerCameraDevice.Rear
+            }
+        }else {
+            if UIImagePickerController.isCameraDeviceAvailable(UIImagePickerControllerCameraDevice.Front) {
+                if !UIImagePickerController.isFlashAvailableForCameraDevice(UIImagePickerControllerCameraDevice.Front) {
+                    self.flashButton.selected = false
+                    imagePickerController?.cameraFlashMode = UIImagePickerControllerCameraFlashMode.Off
+                }
+                imagePickerController?.cameraDevice = UIImagePickerControllerCameraDevice.Front
+            }
+        }
+    }
+    
+    @IBAction func dismiss(sender: AnyObject) {
+        if let imagePickerController = self.imagePickerController {
+            delegate?.imagePickerControllerDidCancel?(imagePickerController)
+        }
+    }
+    
+    public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+        if let imagePickerController = self.imagePickerController {
+            delegate?.imagePickerController?(picker, didFinishPickingMediaWithInfo: info)
+        }
+    }
+    
+    public func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        if let imagePickerController = self.imagePickerController {
+            delegate?.imagePickerControllerDidCancel?(imagePickerController)
+        }
+    }
+}
+
 public class Attachment:NSObject {
     public var delegate:AttachmentDelegate?
     
@@ -41,30 +175,29 @@ public class Attachment:NSObject {
     }
 }
 
-public class ImageAttachment:Attachment, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+public class ImageAttachment:Attachment, UIImagePickerControllerDelegate {
     public override init() {
         super.init()
         self.type = AttachmentType.Image
     }
     
-    private var imagePickerController:UIImagePickerController = UIImagePickerController()
+    private var imagePicker:ImagePicker?
     
     public override func create() {
-        var sourceType = UIImagePickerControllerSourceType.Camera
-        if !UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera) {
-            sourceType = UIImagePickerControllerSourceType.PhotoLibrary
+        if let viewController = self.viewController {
+            imagePicker = ImagePicker(delegate: self)
+            imagePicker!.showPickerOnViewController(viewController)
         }
-        
-        imagePickerController.sourceType = sourceType
-        imagePickerController.delegate = self
-        imagePickerController.allowsEditing = true
-        self.viewController?.modalPresentationStyle = UIModalPresentationStyle.CurrentContext
-        self.viewController?.presentViewController(imagePickerController, animated: true, completion: nil)
     }
     
-    public func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage!, editingInfo: [NSObject : AnyObject]!) {
-        self.image = image//editingInfo[UIImagePickerControllerEditedImage] as? UIImage
+    public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+        self.image = info[UIImagePickerControllerOriginalImage] as? UIImage
         delegate?.onAttachmentCreateFinished(self)
+        self.viewController?.dismissViewControllerAnimated(true, completion: nil)
+    }
+    
+    public func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        println("image did cancel")
         self.viewController?.dismissViewControllerAnimated(true, completion: nil)
     }
     
@@ -73,7 +206,7 @@ public class ImageAttachment:Attachment, UIImagePickerControllerDelegate, UINavi
 }
 
 
-public class VideoAttachment:Attachment, UIImagePickerControllerDelegate, UINavigationControllerDelegate  {
+public class VideoAttachment:Attachment, UIImagePickerControllerDelegate  {
     public override init() {
         super.init()
         self.type = AttachmentType.Video
@@ -82,24 +215,16 @@ public class VideoAttachment:Attachment, UIImagePickerControllerDelegate, UINavi
     /// 视屏的时间长度
     public var duration:Double = 0
     
-    private var moviePlayerController: MPMoviePlayerController?
+    private var imagePicker:ImagePicker?
     
     private var handler:((Attachment)->Void)?
     private var imagePickerController:UIImagePickerController = UIImagePickerController()
     
     public override func create() {
-        var sourceType = UIImagePickerControllerSourceType.Camera
-        if !UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.Camera) {
-            return
+        if let viewController = self.viewController {
+            imagePicker = ImagePicker(delegate: self)
+            imagePicker!.takeVideoOnViewController(viewController)
         }
-        
-        imagePickerController.mediaTypes = [kUTTypeMovie]
-        imagePickerController.sourceType = sourceType
-        imagePickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureMode.Video
-        imagePickerController.delegate = self
-        imagePickerController.allowsEditing = true
-        self.viewController?.modalPresentationStyle = UIModalPresentationStyle.CurrentContext
-        self.viewController?.presentViewController(imagePickerController, animated: true, completion: nil)
     }
     
     public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
@@ -109,6 +234,11 @@ public class VideoAttachment:Attachment, UIImagePickerControllerDelegate, UINavi
                 self.movieToImage(mediaURL)
             }
         }
+    }
+    
+    public func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        println("image did cancel")
+        self.viewController?.dismissViewControllerAnimated(true, completion: nil)
     }
     
     private func movieToImage(url:NSURL) {
@@ -121,6 +251,7 @@ public class VideoAttachment:Attachment, UIImagePickerControllerDelegate, UINavi
             if result == AVAssetImageGeneratorResult.Succeeded {
                 var thumbImg = UIImage(CGImage: im)
                 self.image = thumbImg
+                self.delegate?.onAttachmentCreateFinished(self)
             }
             self.viewController?.dismissViewControllerAnimated(true, completion: nil)
         }

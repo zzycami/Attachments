@@ -15,6 +15,7 @@
 		510E83761B2045A6001F0723 /* AttachmentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510E83751B2045A6001F0723 /* AttachmentsTests.swift */; };
 		510E83801B20461F001F0723 /* AttachmentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510E837F1B20461F001F0723 /* AttachmentViewController.swift */; };
 		510E83821B204666001F0723 /* AttachmentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 510E83811B204666001F0723 /* AttachmentManager.swift */; };
+		5163B8E81B268851000EF2AE /* Overlay.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5163B8E71B268851000EF2AE /* Overlay.xib */; };
 		518D8C711B218DCC0006F658 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 518D8C701B218DCC0006F658 /* MobileCoreServices.framework */; };
 		518D8C731B2190090006F658 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 518D8C721B2190090006F658 /* AVFoundation.framework */; };
 		518D8C751B2190B10006F658 /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 518D8C741B2190B10006F658 /* MediaPlayer.framework */; };
@@ -45,6 +46,7 @@
 		510E83751B2045A6001F0723 /* AttachmentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsTests.swift; sourceTree = "<group>"; };
 		510E837F1B20461F001F0723 /* AttachmentViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AttachmentViewController.swift; sourceTree = "<group>"; };
 		510E83811B204666001F0723 /* AttachmentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AttachmentManager.swift; sourceTree = "<group>"; };
+		5163B8E71B268851000EF2AE /* Overlay.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Overlay.xib; sourceTree = "<group>"; };
 		518D8C701B218DCC0006F658 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		518D8C721B2190090006F658 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		518D8C741B2190B10006F658 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -99,6 +101,7 @@
 				510E83611B2045A6001F0723 /* ViewController.swift */,
 				510E83631B2045A6001F0723 /* Main.storyboard */,
 				510E83811B204666001F0723 /* AttachmentManager.swift */,
+				5163B8E71B268851000EF2AE /* Overlay.xib */,
 				510E837F1B20461F001F0723 /* AttachmentViewController.swift */,
 				518D8C761B2432D10006F658 /* AudioViewCotroller.swift */,
 				518D8C791B2539270006F658 /* TimerLabel.swift */,
@@ -226,6 +229,7 @@
 			files = (
 				510E83651B2045A6001F0723 /* Main.storyboard in Resources */,
 				510E836A1B2045A6001F0723 /* LaunchScreen.xib in Resources */,
+				5163B8E81B268851000EF2AE /* Overlay.xib in Resources */,
 				510E83671B2045A6001F0723 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
